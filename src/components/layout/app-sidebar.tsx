@@ -66,11 +66,7 @@
  };
  
  const menuItems: MenuItem[] = [
-   {
-     title: "Dashboard",
-     href: "/",
-     icon: LayoutDashboard,
-   },
+   { title: "Dashboard", href: "/", icon: LayoutDashboard },
    {
      title: "Hotspot",
      icon: Wifi,
@@ -86,16 +82,8 @@
        { title: "Cookies", href: "/hotspot/cookies", icon: Cookie },
      ],
    },
-   {
-     title: "Quick Print",
-     href: "/quick-print",
-     icon: Printer,
-   },
-   {
-     title: "Vouchers",
-     href: "/vouchers",
-     icon: Ticket,
-   },
+   { title: "Quick Print", href: "/quick-print", icon: Printer },
+   { title: "Vouchers", href: "/vouchers", icon: Ticket },
    {
      title: "Log",
      icon: FileText,
@@ -122,21 +110,9 @@
        { title: "Active", href: "/ppp/active", icon: Activity },
      ],
    },
-   {
-     title: "DHCP Leases",
-     href: "/dhcp",
-     icon: Network,
-   },
-   {
-     title: "Traffic Monitor",
-     href: "/traffic",
-     icon: AreaChart,
-   },
-   {
-     title: "Report",
-     href: "/report",
-     icon: DollarSign,
-   },
+   { title: "DHCP Leases", href: "/dhcp", icon: Network },
+   { title: "Traffic Monitor", href: "/traffic", icon: AreaChart },
+   { title: "Report", href: "/report", icon: DollarSign },
    {
      title: "Settings",
      icon: Settings,
@@ -147,11 +123,7 @@
        { title: "Template Editor", href: "/settings/template", icon: Edit },
      ],
    },
-   {
-     title: "About",
-     href: "/about",
-     icon: Info,
-   },
+   { title: "About", href: "/about", icon: Info },
  ];
  
  export function AppSidebar() {
@@ -159,8 +131,8 @@
  
    return (
      <Sidebar>
-       <SidebarHeader className="border-b px-4">
-         <Link href="/" className="flex h-14 items-center gap-2 font-semibold">
+       <SidebarHeader className="h-14 justify-center border-b px-4">
+         <Link href="/" className="flex items-center gap-2 font-semibold">
            <Server className="h-6 w-6" />
            <span>{APP_NAME}</span>
          </Link>
@@ -184,10 +156,7 @@
                          <SidebarMenuSub>
                            {item.items.map((subItem) => (
                              <SidebarMenuSubItem key={subItem.href}>
-                               <SidebarMenuSubButton
-                                 asChild
-                                 isActive={pathname === subItem.href}
-                               >
+                               <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
                                  <Link href={subItem.href}>
                                    <subItem.icon className="h-4 w-4" />
                                    <span>{subItem.title}</span>
@@ -201,10 +170,7 @@
                    </Collapsible>
                  ) : (
                    <SidebarMenuItem key={item.href}>
-                     <SidebarMenuButton
-                       asChild
-                       isActive={pathname === item.href}
-                     >
+                     <SidebarMenuButton asChild isActive={pathname === item.href}>
                        <Link href={item.href!}>
                          <item.icon className="h-4 w-4" />
                          <span>{item.title}</span>
