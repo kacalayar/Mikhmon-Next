@@ -21,7 +21,7 @@
  - Original Repository: [github.com/laksa19/mikhmonv3](https://github.com/laksa19/mikhmonv3)
  
  **Mikhmon Next Author:**
- - **Kacalayar**
+ - **Kacalayar** - [github.com/kacalayar](https://github.com/kacalayar)
  
  ## Features
  
@@ -164,7 +164,11 @@
     - Connect to your project
  4. Set environment variables:
     - `AUTH_SECRET` - Generate with `openssl rand -base64 32`
- 5. Deploy!
+ 5. After first deploy, run database migration:
+    ```bash
+    npx prisma db push
+    ```
+ 6. Redeploy if needed
  
  > **Note**: Router data will be stored in Vercel Postgres. For local development, data is stored in `data/routers.json`.
  
