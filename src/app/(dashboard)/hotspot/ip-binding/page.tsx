@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link as LinkIcon, Trash2, Lock, Unlock, Loader2 } from "lucide-react";
+import { Link as LinkIcon, Trash2, Lock, Unlock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface IPBinding {
   ".id": string;
@@ -102,7 +103,7 @@ export default function IPBindingPage() {
                 onClick={() =>
                   handleDeleteBinding(binding[".id"], binding["mac-address"])
                 }
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${binding["mac-address"]}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -114,7 +115,7 @@ export default function IPBindingPage() {
                     binding.disabled || "false",
                   )
                 }
-                className={isDisabled ? "text-warning" : "text-foreground"}
+                className={`cursor-pointer ${isDisabled ? "text-warning hover:text-warning/80" : "text-foreground hover:text-foreground/80"}`}
                 title={
                   isDisabled
                     ? `Enable Binding ${binding.address}`
@@ -185,11 +186,7 @@ export default function IPBindingPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (

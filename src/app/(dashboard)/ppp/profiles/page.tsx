@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Settings, Loader2 } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface PPPProfile {
   ".id": string;
@@ -79,11 +80,7 @@ export default function PPPProfilesPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={4} />;
   }
 
   return (

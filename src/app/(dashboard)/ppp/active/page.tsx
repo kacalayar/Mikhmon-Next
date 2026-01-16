@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Activity, RefreshCw, Loader2 } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface PPPActive {
   ".id": string;
@@ -85,11 +86,7 @@ export default function PPPActivePage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (
@@ -101,7 +98,10 @@ export default function PPPActivePage() {
             <span>PPP Active</span>
             <span className="text-sm font-normal text-muted-foreground">
               |{" "}
-              <button onClick={refreshActive} className="hover:text-primary">
+              <button
+                onClick={refreshActive}
+                className="cursor-pointer hover:text-primary"
+              >
                 <RefreshCw className="inline h-3 w-3" />
               </button>
             </span>

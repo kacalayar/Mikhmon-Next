@@ -2,15 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  Users,
-  Trash2,
-  Lock,
-  Unlock,
-  Printer,
-  Loader2,
-  QrCode,
-} from "lucide-react";
+import { Users, Trash2, Lock, Unlock, Printer, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import Link from "next/link";
 
 import type { HotspotUser, HotspotUserProfile } from "@/types/routeros";
@@ -175,7 +168,7 @@ export default function HotspotUsersPage() {
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => handleDeleteUser(user[".id"], user.name)}
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${user.name}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -184,7 +177,7 @@ export default function HotspotUsersPage() {
                 onClick={() =>
                   handleToggleUser(user[".id"], user.disabled || "false")
                 }
-                className={isDisabled ? "text-warning" : "text-foreground"}
+                className={`cursor-pointer ${isDisabled ? "text-warning hover:text-warning/80" : "text-foreground hover:text-foreground/80"}`}
                 title={
                   isDisabled ? `Enable ${user.name}` : `Disable ${user.name}`
                 }
@@ -229,14 +222,14 @@ export default function HotspotUsersPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => toast.info("Print feature coming soon")}
-                className="hover:text-primary"
+                className="cursor-pointer hover:text-primary"
                 title={`Print ${user.name}`}
               >
                 <Printer className="h-4 w-4" />
               </button>
               <button
                 onClick={() => toast.info("Print QR feature coming soon")}
-                className="hover:text-primary"
+                className="cursor-pointer hover:text-primary"
                 title={`Print QR ${user.name}`}
               >
                 <QrCode className="h-4 w-4" />
@@ -307,11 +300,7 @@ export default function HotspotUsersPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={8} columns={6} />;
   }
 
   return (
@@ -333,14 +322,14 @@ export default function HotspotUsersPage() {
               {" | "}
               <button
                 onClick={() => toast.info("Export feature coming soon")}
-                className="hover:underline"
+                className="cursor-pointer hover:underline"
               >
                 Script
               </button>
               {" | "}
               <button
                 onClick={() => toast.info("Export feature coming soon")}
-                className="hover:underline"
+                className="cursor-pointer hover:underline"
               >
                 CSV
               </button>

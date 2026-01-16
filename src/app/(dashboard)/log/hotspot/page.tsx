@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { FileText, RefreshCw, Loader2 } from "lucide-react";
+import { FileText, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface LogEntry {
   time: string;
@@ -94,11 +95,7 @@ export default function HotspotLogPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={8} columns={3} />;
   }
 
   return (
@@ -110,7 +107,10 @@ export default function HotspotLogPage() {
             <span>Hotspot Log</span>
             <span className="text-sm font-normal text-muted-foreground">
               |{" "}
-              <button onClick={refreshLogs} className="hover:text-primary">
+              <button
+                onClick={refreshLogs}
+                className="cursor-pointer hover:text-primary"
+              >
                 <RefreshCw className="inline h-3 w-3" />
               </button>
             </span>

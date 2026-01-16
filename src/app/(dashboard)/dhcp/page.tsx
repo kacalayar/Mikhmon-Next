@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Network, Loader2, RefreshCw } from "lucide-react";
+import { Network, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface DhcpLease {
   ".id": string;
@@ -53,7 +54,10 @@ export default function DHCPPage() {
           const isDynamic = row.original.dynamic === "true";
           return (
             <div className="flex justify-center">
-              <Badge variant={isDynamic ? "default" : "secondary"} title={isDynamic ? "Dynamic" : "Static"}>
+              <Badge
+                variant={isDynamic ? "default" : "secondary"}
+                title={isDynamic ? "Dynamic" : "Static"}
+              >
                 {isDynamic ? "D" : "S"}
               </Badge>
             </div>
@@ -117,15 +121,11 @@ export default function DHCPPage() {
         },
       },
     ],
-    []
+    [],
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} showCard={false} />;
   }
 
   return (

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface QuickPrintPackage {
   id: string;
@@ -180,14 +181,14 @@ export default function QuickPrintListPage() {
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => handleDelete(pkg.id, pkg.package)}
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${pkg.package}`}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => toast.info(`Print ${pkg.package}`)}
-                className="text-primary hover:text-primary/80"
+                className="cursor-pointer text-primary hover:text-primary/80"
                 title={`Print ${pkg.package}`}
               >
                 <Printer className="h-4 w-4" />
@@ -249,11 +250,7 @@ export default function QuickPrintListPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (

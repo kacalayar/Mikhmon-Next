@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Clock, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Clock, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface Scheduler {
   ".id": string;
@@ -75,7 +76,7 @@ export default function SchedulerPage() {
             <div className="flex items-center justify-center">
               <button
                 onClick={() => handleDelete(scheduler[".id"], scheduler.name)}
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${scheduler.name}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -135,11 +136,7 @@ export default function SchedulerPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (
@@ -153,7 +150,7 @@ export default function SchedulerPage() {
               |{" "}
               <button
                 onClick={refreshSchedulers}
-                className="hover:text-primary"
+                className="cursor-pointer hover:text-primary"
               >
                 <RefreshCw className="inline h-3 w-3" />
               </button>

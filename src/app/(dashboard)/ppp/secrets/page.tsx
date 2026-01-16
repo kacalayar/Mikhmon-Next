@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { KeyRound, Trash2, Loader2 } from "lucide-react";
+import { KeyRound, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface PPPSecret {
   ".id": string;
@@ -76,7 +77,7 @@ export default function PPPSecretsPage() {
             <div className="flex items-center justify-center">
               <button
                 onClick={() => handleDelete(secret[".id"], secret.name)}
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${secret.name}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -143,11 +144,7 @@ export default function PPPSecretsPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (

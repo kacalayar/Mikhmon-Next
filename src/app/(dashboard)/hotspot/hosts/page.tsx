@@ -3,12 +3,13 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
-import { Laptop, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Laptop, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import Link from "next/link";
 
 interface HotspotHost {
@@ -90,7 +91,7 @@ export default function HotspotHostsPage() {
                 onClick={() =>
                   handleDeleteHost(host[".id"], host["mac-address"])
                 }
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${host["mac-address"]}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -150,11 +151,7 @@ export default function HotspotHostsPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={6} columns={5} />;
   }
 
   return (
@@ -187,7 +184,10 @@ export default function HotspotHostsPage() {
                 P
               </Link>
               {" | "}
-              <button onClick={refreshHosts} className="hover:text-primary">
+              <button
+                onClick={refreshHosts}
+                className="cursor-pointer hover:text-primary"
+              >
                 <RefreshCw className="inline h-3 w-3" />
               </button>
             </span>

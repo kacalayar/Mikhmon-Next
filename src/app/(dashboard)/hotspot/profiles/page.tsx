@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { PieChart, Trash2, Edit, Users, Loader2 } from "lucide-react";
+import { PieChart, Trash2, Edit, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import Link from "next/link";
 
 import type { HotspotUserProfile } from "@/types/routeros";
@@ -90,7 +91,7 @@ export default function HotspotProfilesPage() {
                 onClick={() =>
                   handleDeleteProfile(profile[".id"], profile.name)
                 }
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${profile.name}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -154,11 +155,7 @@ export default function HotspotProfilesPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={5} />;
   }
 
   return (

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AreaChart, Loader2 } from "lucide-react";
+import { AreaChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Select,
@@ -101,8 +102,21 @@ export default function TrafficPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="h-5 w-40" />
+              </div>
+              <Skeleton className="h-9 w-64" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[500px] w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }

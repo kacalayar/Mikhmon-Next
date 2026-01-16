@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Cookie, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Cookie, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 interface HotspotCookie {
   ".id": string;
@@ -71,7 +72,7 @@ export default function HotspotCookiesPage() {
             <div className="flex items-center justify-center">
               <button
                 onClick={() => handleDeleteCookie(cookie[".id"], cookie.user)}
-                className="text-destructive hover:text-destructive/80"
+                className="cursor-pointer text-destructive hover:text-destructive/80"
                 title={`Remove ${cookie.user}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -111,11 +112,7 @@ export default function HotspotCookiesPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton rows={5} columns={4} />;
   }
 
   return (
@@ -127,7 +124,10 @@ export default function HotspotCookiesPage() {
             <span>Hotspot Cookies</span>
             <span className="text-sm font-normal text-muted-foreground">
               |{" "}
-              <button onClick={refreshCookies} className="hover:text-primary">
+              <button
+                onClick={refreshCookies}
+                className="cursor-pointer hover:text-primary"
+              >
                 <RefreshCw className="inline h-3 w-3" />
               </button>
             </span>

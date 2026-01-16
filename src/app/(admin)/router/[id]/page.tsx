@@ -12,6 +12,7 @@ import {
   Trash,
   Wifi,
 } from "lucide-react";
+import { FormSkeleton } from "@/components/ui/page-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +73,7 @@ export default function EditRouterPage({
 
     let host = formData.host;
     let port = formData.port;
-    
+
     if (formData.host.includes(":")) {
       const parts = formData.host.split(":");
       host = parts[0];
@@ -161,11 +162,7 @@ export default function EditRouterPage({
   }
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <FormSkeleton />;
   }
 
   if (!formData) return null;
@@ -222,7 +219,8 @@ export default function EditRouterPage({
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Bisa input IP saja (192.168.88.1) atau hostname:port (id-10.hostddns.us:56933)
+                  Bisa input IP saja (192.168.88.1) atau hostname:port
+                  (id-10.hostddns.us:56933)
                 </p>
               </div>
               <div className="space-y-2">
