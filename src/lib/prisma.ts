@@ -6,7 +6,7 @@
  };
  
  function createPrismaClient(): PrismaClient {
-   const url = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
+   const url = process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL;
    if (!url) {
      // Return a mock client that throws on use - Prisma not configured
      return new Proxy({} as PrismaClient, {

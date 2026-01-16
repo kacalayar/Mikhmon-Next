@@ -1,7 +1,7 @@
  import { prisma } from "./prisma";
  import type { MikrotikRouter, RouterConfig } from "@/types";
  
- const isVercel = process.env.VERCEL === "1" || process.env.POSTGRES_PRISMA_URL;
+ const isVercel = process.env.VERCEL === "1" || process.env.DATABASE_URL || process.env.POSTGRES_URL;
  
  function mapRouterFromDB(row: {
    id: string;
