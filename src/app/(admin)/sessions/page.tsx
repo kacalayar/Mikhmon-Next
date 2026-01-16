@@ -138,17 +138,17 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-wrap items-center gap-2">
         <Settings className="h-5 w-5" />
-        <h1 className="text-xl font-semibold">Admin Settings</h1>
+        <h1 className="text-lg font-semibold md:text-xl">Admin Settings</h1>
         <span className="text-muted-foreground">|</span>
         <Button variant="ghost" size="sm" onClick={() => fetchRouters()}>
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
         {/* Router List */}
         <Card>
           <CardHeader className="pb-3">
@@ -167,56 +167,56 @@ export default function SessionsPage() {
               routers.map((r, index) => (
                 <div
                   key={r.id}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${COLORS[index % COLORS.length]} bg-opacity-10`}
+                  className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${COLORS[index % COLORS.length]} bg-opacity-10`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 sm:items-center">
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded ${COLORS[index % COLORS.length]}`}
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded ${COLORS[index % COLORS.length]}`}
                     >
                       <Server className="h-5 w-5 text-white" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        Hotspot Name: {r.hotspotName || r.name}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {r.hotspotName || r.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Session Name: {r.name}
+                      <p className="truncate text-xs text-muted-foreground">
+                        {r.name}
                       </p>
-                      <div className="mt-1 flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="link"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => handleConnect(r.id)}
-                          disabled={connecting === r.id}
-                        >
-                          {connecting === r.id ? (
-                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          ) : (
-                            <ExternalLink className="mr-1 h-3 w-3" />
-                          )}
-                          Open
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="link"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => router.push(`/router/${r.id}`)}
-                        >
-                          <Settings className="mr-1 h-3 w-3" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="link"
-                          className="h-auto p-0 text-xs text-destructive"
-                          onClick={() => handleDelete(r.id, r.name)}
-                        >
-                          <Trash2 className="mr-1 h-3 w-3" />
-                          Delete
-                        </Button>
-                      </div>
                     </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pl-13 sm:pl-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => handleConnect(r.id)}
+                      disabled={connecting === r.id}
+                    >
+                      {connecting === r.id ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <ExternalLink className="mr-1 h-3 w-3" />
+                      )}
+                      Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => router.push(`/router/${r.id}`)}
+                    >
+                      <Settings className="mr-1 h-3 w-3" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(r.id, r.name)}
+                    >
+                      <Trash2 className="mr-1 h-3 w-3" />
+                      Delete
+                    </Button>
                   </div>
                 </div>
               ))

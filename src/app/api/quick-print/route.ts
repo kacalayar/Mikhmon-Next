@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouterOSClient } from "@/lib/routeros";
-import { cookies } from "next/headers";
+import { getAuthenticatedClient } from "@/lib/session";
+import { withRateLimit } from "@/lib/rate-limit";
+import {
+  validateInput,
+  idParamSchema,
+  quickPrintSchema,
+} from "@/lib/validations";
+
+const checkReadonlyRateLimit = withRateLimit("readonly");
+const checkApiRateLimit = withRateLimit("api");
 
 function formatBytes(bytes: string | number): string {
   const numBytes = typeof bytes === "string" ? parseInt(bytes) : bytes;
@@ -11,48 +19,38 @@ function formatBytes(bytes: string | number): string {
   return Math.round((numBytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
-
-  if (!sessionData) {
+export async function GET(request: NextRequest) {
+  const rateLimit = checkReadonlyRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
     const scripts = await client.write("/system/script/print", [
       "?comment=QuickPrintMikhmon",
     ]);
     await client.disconnect();
 
     // Parse quick print packages from script source
-    const packages = scripts.map((script: any) => {
-      const source = script.source || "";
+    const packages = scripts.map((script) => {
+      const s = script as Record<string, string>;
+      const source = s.source || "";
       const parts = source.split("#");
 
       return {
-        id: script[".id"],
-        name: script.name,
+        id: s[".id"],
+        name: s.name,
         package: parts[1] || "-",
         server: parts[2] || "all",
         profile: parts[7] || "-",
@@ -64,30 +62,46 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ success: true, data: packages });
+    return NextResponse.json(
+      { success: true, data: packages },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Quick print API error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }
 
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
-
-  if (!sessionData) {
+  const rateLimit = checkApiRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 }
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
     const body = await request.json();
+    const validation = validateInput(quickPrintSchema, body);
+    if (!validation.success) {
+      await client.disconnect();
+      return NextResponse.json(
+        { success: false, error: validation.error },
+        { status: 400, headers: rateLimit.headers },
+      );
+    }
 
     const {
       name,
@@ -101,14 +115,7 @@ export async function POST(request: NextRequest) {
       dataLimit,
       dataUnit,
       comment,
-    } = body;
-
-    if (!name || !profile) {
-      return NextResponse.json(
-        { success: false, error: "Name and Profile are required" },
-        { status: 400 }
-      );
-    }
+    } = validation.data;
 
     const scriptName = `Quick_Print_${name.replace(/\s+/g, "-")}`;
     const calculatedDataLimit =
@@ -116,22 +123,6 @@ export async function POST(request: NextRequest) {
 
     // Build script source similar to PHP version
     const scriptSource = `#${name}#${server}#${userMode}#${nameLength}#${prefix}#${character}#${profile}#${timeLimit || ""}#${calculatedDataLimit}#${comment || ""}#`;
-
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 }
-      );
-    }
 
     await client.write("/system/script/add", [
       `=name=${scriptName}`,
@@ -141,67 +132,61 @@ export async function POST(request: NextRequest) {
 
     await client.disconnect();
 
-    return NextResponse.json({
-      success: true,
-      message: "Quick Print package created",
-    });
+    return NextResponse.json(
+      { success: true, message: "Quick Print package created" },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Create package error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create package" },
-      { status: 500 }
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
-
-  if (!sessionData) {
+  const rateLimit = checkApiRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
-    if (!id) {
+    const validation = validateInput(idParamSchema, id);
+    if (!validation.success) {
+      await client.disconnect();
       return NextResponse.json(
-        { success: false, error: "Package ID is required" },
-        { status: 400 },
+        { success: false, error: validation.error },
+        { status: 400, headers: rateLimit.headers },
       );
     }
 
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
-    await client.write("/system/script/remove", [`=.id=${id}`]);
+    await client.write("/system/script/remove", [`=.id=${validation.data}`]);
     await client.disconnect();
 
-    return NextResponse.json({ success: true, message: "Package deleted" });
+    return NextResponse.json(
+      { success: true, message: "Package deleted" },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Delete package error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete package" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }

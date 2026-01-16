@@ -1,97 +1,89 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouterOSClient } from "@/lib/routeros";
-import { cookies } from "next/headers";
+import { getAuthenticatedClient } from "@/lib/session";
+import { withRateLimit } from "@/lib/rate-limit";
+import { validateInput, idParamSchema } from "@/lib/validations";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
+const checkReadonlyRateLimit = withRateLimit("readonly");
+const checkApiRateLimit = withRateLimit("api");
 
-  if (!sessionData) {
+export async function GET(request: NextRequest) {
+  const rateLimit = checkReadonlyRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
     const hotspotCookies = await client.write("/ip/hotspot/cookie/print");
     await client.disconnect();
 
-    return NextResponse.json({ success: true, data: hotspotCookies });
+    return NextResponse.json(
+      { success: true, data: hotspotCookies },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Hotspot cookies API error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
-
-  if (!sessionData) {
+  const rateLimit = checkApiRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
-    if (!id) {
+    const validation = validateInput(idParamSchema, id);
+    if (!validation.success) {
+      await client.disconnect();
       return NextResponse.json(
-        { success: false, error: "Cookie ID is required" },
-        { status: 400 },
+        { success: false, error: validation.error },
+        { status: 400, headers: rateLimit.headers },
       );
     }
 
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
-    await client.write("/ip/hotspot/cookie/remove", [`=.id=${id}`]);
+    await client.write("/ip/hotspot/cookie/remove", [
+      `=.id=${validation.data}`,
+    ]);
     await client.disconnect();
 
-    return NextResponse.json({ success: true, message: "Cookie removed" });
+    return NextResponse.json(
+      { success: true, message: "Cookie removed" },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Delete cookie error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to remove cookie" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }

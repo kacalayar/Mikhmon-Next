@@ -1,45 +1,39 @@
-import { NextResponse } from "next/server";
-import { createRouterOSClient } from "@/lib/routeros";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedClient } from "@/lib/session";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
+const checkReadonlyRateLimit = withRateLimit("readonly");
 
-  if (!sessionData) {
+export async function GET(request: NextRequest) {
+  const rateLimit = checkReadonlyRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      { success: false, error: "Too many requests" },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "Unauthorized" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
     const profiles = await client.write("/ppp/profile/print");
     await client.disconnect();
 
-    return NextResponse.json({ success: true, data: profiles });
+    return NextResponse.json(
+      { success: true, data: profiles },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("PPP profiles API error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }

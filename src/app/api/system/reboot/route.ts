@@ -1,45 +1,45 @@
 import { NextResponse } from "next/server";
-import { createRouterOSClient } from "@/lib/routeros";
-import { cookies } from "next/headers";
+import { getAuthenticatedClient } from "@/lib/session";
+import { withRateLimit } from "@/lib/rate-limit";
 
-export async function POST() {
-  const cookieStore = await cookies();
-  const sessionData = cookieStore.get("mikhmon_session");
+// Use strict rate limiting for dangerous operations
+const checkRateLimit = withRateLimit("sensitive");
 
-  if (!sessionData) {
+export async function POST(request: Request) {
+  // Rate limiting - very strict for reboot
+  const rateLimit = checkRateLimit(request);
+  if (!rateLimit.allowed) {
     return NextResponse.json(
-      { success: false, error: "No active session" },
-      { status: 401 },
+      {
+        success: false,
+        error: "Too many requests. Please wait before retrying.",
+      },
+      { status: 429, headers: rateLimit.headers },
+    );
+  }
+
+  const { client, error } = await getAuthenticatedClient();
+
+  if (!client) {
+    return NextResponse.json(
+      { success: false, error: error || "No active session" },
+      { status: 401, headers: rateLimit.headers },
     );
   }
 
   try {
-    const session = JSON.parse(sessionData.value);
-    const client = createRouterOSClient();
-
-    const connected = await client.connect({
-      host: session.host,
-      port: session.port,
-      user: session.user,
-      password: session.password,
-    });
-
-    if (!connected) {
-      return NextResponse.json(
-        { success: false, error: "Failed to connect to MikroTik" },
-        { status: 503 },
-      );
-    }
-
     await client.write("/system/reboot");
     await client.disconnect();
 
-    return NextResponse.json({ success: true, message: "Router is rebooting" });
+    return NextResponse.json(
+      { success: true, message: "Router is rebooting" },
+      { headers: rateLimit.headers },
+    );
   } catch (error) {
     console.error("Reboot error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to reboot" },
-      { status: 500 },
+      { status: 500, headers: rateLimit.headers },
     );
   }
 }
