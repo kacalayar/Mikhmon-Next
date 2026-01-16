@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { getRouter } from "@/lib/router-config";
 import { createRouterOSClient } from "@/lib/routeros";
 import { setRouterSession } from "@/lib/session";
-import { withRateLimit, createRateLimitHeaders } from "@/lib/rate-limit";
+import { withRateLimit } from "@/lib/rate-limit";
 
 const checkRateLimit = withRateLimit("api");
 

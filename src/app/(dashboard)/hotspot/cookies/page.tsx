@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Cookie, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,7 @@ export default function HotspotCookiesPage() {
     refreshCookies();
   }, []);
 
-  async function handleDeleteCookie(id: string, user: string) {
+  const handleDeleteCookie = useCallback(async (id: string, user: string) => {
     if (!confirm(`Are you sure to remove cookie for user (${user})?`)) return;
 
     try {
@@ -58,7 +58,7 @@ export default function HotspotCookiesPage() {
       console.error("Failed to remove cookie:", error);
       toast.error("Failed to remove cookie");
     }
-  }
+  }, []);
 
   const columns: ColumnDef<HotspotCookie>[] = useMemo(
     () => [
@@ -107,7 +107,7 @@ export default function HotspotCookiesPage() {
         cell: ({ row }) => row.getValue("expires-in") || "-",
       },
     ],
-    [cookies],
+    [cookies, handleDeleteCookie],
   );
 
   if (loading) {

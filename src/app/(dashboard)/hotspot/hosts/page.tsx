@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Laptop, Trash2, RefreshCw, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -29,7 +28,7 @@ export default function HotspotHostsPage() {
   const [hosts, setHosts] = useState<HotspotHost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function refreshHosts() {
+  const refreshHosts = useCallback(async () => {
     setLoading(true);
     try {
       let url = "/api/hotspot/hosts";
@@ -48,32 +47,35 @@ export default function HotspotHostsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter]);
 
   useEffect(() => {
     refreshHosts();
-  }, [filter]);
+  }, [filter, refreshHosts]);
 
-  async function handleDeleteHost(id: string, mac: string) {
-    if (!confirm(`Are you sure to delete host (${mac})?`)) return;
+  const handleDeleteHost = useCallback(
+    async (id: string, mac: string) => {
+      if (!confirm(`Are you sure to delete host (${mac})?`)) return;
 
-    try {
-      const res = await fetch(`/api/hotspot/hosts?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/hotspot/hosts?id=${id}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        toast.success("Host deleted");
-        refreshHosts();
-      } else {
-        toast.error(data.error || "Failed to delete host");
+        if (data.success) {
+          toast.success("Host deleted");
+          refreshHosts();
+        } else {
+          toast.error(data.error || "Failed to delete host");
+        }
+      } catch (error) {
+        console.error("Failed to delete host:", error);
+        toast.error("Failed to delete host");
       }
-    } catch (error) {
-      console.error("Failed to delete host:", error);
-      toast.error("Failed to delete host");
-    }
-  }
+    },
+    [refreshHosts],
+  );
 
   const columns: ColumnDef<HotspotHost>[] = useMemo(
     () => [
@@ -144,7 +146,7 @@ export default function HotspotHostsPage() {
         cell: ({ row }) => row.getValue("comment") || "-",
       },
     ],
-    [hosts],
+    [hosts, handleDeleteHost],
   );
 
   if (loading) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link as LinkIcon, Trash2, Lock, Unlock, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +42,7 @@ export default function IPBindingPage() {
     refreshBindings();
   }, []);
 
-  async function handleDeleteBinding(id: string, mac: string) {
+  const handleDeleteBinding = useCallback(async (id: string, mac: string) => {
     if (!confirm(`Are you sure to delete (${mac})?`)) return;
 
     try {
@@ -61,29 +61,32 @@ export default function IPBindingPage() {
       console.error("Failed to delete binding:", error);
       toast.error("Failed to delete binding");
     }
-  }
+  }, []);
 
-  async function handleToggleBinding(id: string, currentStatus: string) {
-    try {
-      const action = currentStatus === "true" ? "enable" : "disable";
-      const res = await fetch("/api/hotspot/ip-binding", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action }),
-      });
-      const data = await res.json();
+  const handleToggleBinding = useCallback(
+    async (id: string, currentStatus: string) => {
+      try {
+        const action = currentStatus === "true" ? "enable" : "disable";
+        const res = await fetch("/api/hotspot/ip-binding", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, action }),
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        toast.success(data.message);
-        refreshBindings();
-      } else {
-        toast.error(data.error || "Action failed");
+        if (data.success) {
+          toast.success(data.message);
+          refreshBindings();
+        } else {
+          toast.error(data.error || "Action failed");
+        }
+      } catch (error) {
+        console.error("Action failed:", error);
+        toast.error("Action failed");
       }
-    } catch (error) {
-      console.error("Action failed:", error);
-      toast.error("Action failed");
-    }
-  }
+    },
+    [],
+  );
 
   const columns: ColumnDef<IPBinding>[] = useMemo(
     () => [
@@ -178,7 +181,7 @@ export default function IPBindingPage() {
         cell: ({ row }) => row.getValue("server") || "all",
       },
     ],
-    [bindings],
+    [bindings, handleDeleteBinding, handleToggleBinding],
   );
 
   if (loading) {

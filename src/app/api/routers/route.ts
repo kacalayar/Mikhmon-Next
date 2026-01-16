@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Parse host:port if provided in host field
-    let processedBody = { ...body };
+    const processedBody = { ...body };
     if (body.host && body.host.includes(":")) {
       const parts = body.host.split(":");
       processedBody.host = parts[0];

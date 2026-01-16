@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AreaChart, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+
 import {
   Select,
   SelectContent,
@@ -37,9 +37,7 @@ function formatBps(bps: number): string {
   const sizes = ["bps", "Kbps", "Mbps", "Gbps"];
   if (bps === 0) return "0 bps";
   const i = Math.floor(Math.log(bps) / Math.log(1024));
-  return (
-    Math.round((bps / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i]
-  );
+  return Math.round((bps / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
 }
 
 export default function TrafficPage() {
@@ -73,7 +71,7 @@ export default function TrafficPage() {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(
-          `/api/traffic/monitor?interface=${selectedInterface}`
+          `/api/traffic/monitor?interface=${selectedInterface}`,
         );
         const result = await res.json();
 
@@ -142,69 +140,53 @@ export default function TrafficPage() {
         </CardHeader>
         <CardContent>
           <div className="h-[500px] w-full">
-              {trafficData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsAreaChart
-                    data={trafficData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                      <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#10b981"
-                          stopOpacity={0.8}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10b981"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis tickFormatter={(value) => formatBps(value)} />
-                    <Tooltip
-                      formatter={(value: any) => formatBps(Number(value))}
-                      labelStyle={{ color: "#000" }}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="tx"
-                      stroke="#3b82f6"
-                      fillOpacity={1}
-                      fill="url(#colorTx)"
-                      name="TX"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="rx"
-                      stroke="#10b981"
-                      fillOpacity={1}
-                      fill="url(#colorRx)"
-                      name="RX"
-                    />
-                  </RechartsAreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  Waiting for traffic data...
-                </div>
-              )}
+            {trafficData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsAreaChart
+                  data={trafficData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" />
+                  <YAxis tickFormatter={(value) => formatBps(value)} />
+                  <Tooltip
+                    formatter={(value) => formatBps(Number(value ?? 0))}
+                    labelStyle={{ color: "#000" }}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="tx"
+                    stroke="#3b82f6"
+                    fillOpacity={1}
+                    fill="url(#colorTx)"
+                    name="TX"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="rx"
+                    stroke="#10b981"
+                    fillOpacity={1}
+                    fill="url(#colorRx)"
+                    name="RX"
+                  />
+                </RechartsAreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                Waiting for traffic data...
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

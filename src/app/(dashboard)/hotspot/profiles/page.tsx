@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { Plus, PieChart, Trash2, Edit, Users, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PieChart, Trash2, Edit, Users, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
@@ -14,7 +12,6 @@ import Link from "next/link";
 import type { HotspotUserProfile } from "@/types/routeros";
 
 export default function HotspotProfilesPage() {
-  const router = useRouter();
   const [profiles, setProfiles] = useState<HotspotUserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +56,7 @@ export default function HotspotProfilesPage() {
     };
   }, []);
 
-  async function handleDeleteProfile(id: string, name: string) {
+  const handleDeleteProfile = useCallback(async (id: string, name: string) => {
     if (!confirm(`Are you sure to delete profile (${name})?`)) return;
 
     try {
@@ -78,7 +75,7 @@ export default function HotspotProfilesPage() {
       console.error("Failed to delete profile:", error);
       toast.error("Failed to delete profile");
     }
-  }
+  }, []);
 
   const columns: ColumnDef<HotspotUserProfile>[] = useMemo(
     () => [
@@ -153,7 +150,7 @@ export default function HotspotProfilesPage() {
         cell: ({ row }) => row.getValue("keepalive-timeout") || "-",
       },
     ],
-    [profiles],
+    [profiles, handleDeleteProfile],
   );
 
   if (loading) {

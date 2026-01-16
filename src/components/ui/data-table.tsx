@@ -68,6 +68,7 @@ export function DataTable<TData, TValue>({
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table API is intentionally used here
   const table = useReactTable({
     data,
     columns,

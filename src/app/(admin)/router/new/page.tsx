@@ -34,7 +34,6 @@
        return;
      }
  
-     // Parse host:port if provided in host field
      let host = formData.host;
      let port = formData.port;
      

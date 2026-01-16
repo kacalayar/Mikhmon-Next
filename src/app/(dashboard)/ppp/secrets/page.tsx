@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { KeyRound, Trash2, Plus, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { KeyRound, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import Link from "next/link";
 
 interface PPPSecret {
   ".id": string;
@@ -46,7 +44,7 @@ export default function PPPSecretsPage() {
     refreshSecrets();
   }, []);
 
-  async function handleDelete(id: string, name: string) {
+  const handleDelete = useCallback(async (id: string, name: string) => {
     if (!confirm(`Are you sure to delete secret (${name})?`)) return;
 
     try {
@@ -65,7 +63,7 @@ export default function PPPSecretsPage() {
       console.error("Failed to delete secret:", error);
       toast.error("Failed to delete secret");
     }
-  }
+  }, []);
 
   const columns: ColumnDef<PPPSecret>[] = useMemo(
     () => [
@@ -141,7 +139,7 @@ export default function PPPSecretsPage() {
         cell: ({ row }) => row.getValue("comment") || "-",
       },
     ],
-    [secrets],
+    [secrets, handleDelete],
   );
 
   if (loading) {

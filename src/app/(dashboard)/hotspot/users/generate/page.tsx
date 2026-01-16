@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Users, X } from "lucide-react";
+import { Loader2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -140,7 +140,6 @@ export default function GenerateUsersPage() {
         const chars = generateChars(formData.userLength, formData.charMode);
         const username = formData.prefix + chars;
 
-        // For vc mode, password = username. For up mode, generate separate password
         const password =
           formData.userMode === "vc"
             ? username

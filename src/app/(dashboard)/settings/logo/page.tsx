@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Image, Upload, Trash2, Eye, Loader2 } from "lucide-react";
+import NextImage from "next/image";
+import { Upload, Trash2, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,7 @@ export default function LogoSettingsPage() {
       try {
         const session = JSON.parse(decodeURIComponent(cookieMatch[1]));
         setSessionName(session.name || "default");
-      } catch (e) {
+      } catch {
         setSessionName("default");
       }
     }
@@ -129,7 +130,10 @@ export default function LogoSettingsPage() {
                   className="cursor-pointer"
                 />
               </div>
-              <Button onClick={handleUpload} disabled={!selectedFile || uploading}>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || uploading}
+              >
                 {uploading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -166,9 +170,11 @@ export default function LogoSettingsPage() {
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
                   <div className="flex items-center gap-4">
-                    <img
+                    <NextImage
                       src={logo.url}
                       alt={logo.name}
+                      width={32}
+                      height={32}
                       className="h-8 w-auto"
                     />
                     <span className="text-sm">{logo.name}</span>

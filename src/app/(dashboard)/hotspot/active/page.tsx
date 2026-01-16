@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Radio, X, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export default function HotspotActivePage() {
     return () => clearInterval(interval);
   }, []);
 
-  async function handleKickUser(id: string) {
+  const handleKickUser = useCallback(async (id: string) => {
     try {
       const res = await fetch(`/api/hotspot/active?id=${id}`, {
         method: "DELETE",
@@ -66,7 +66,7 @@ export default function HotspotActivePage() {
       console.error("Failed to kick user:", error);
       toast.error("Failed to disconnect user");
     }
-  }
+  }, []);
 
   const columns: ColumnDef<HotspotActive>[] = useMemo(
     () => [
@@ -145,7 +145,7 @@ export default function HotspotActivePage() {
         },
       },
     ],
-    [],
+    [handleKickUser],
   );
 
   if (loading) {

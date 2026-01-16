@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Printer, List, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -91,7 +90,7 @@ export default function QuickPrintPage() {
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 Create packages in MikroTik System Scripts with comment
-                "QuickPrintMikhmon"
+                &quot;QuickPrintMikhmon&quot;
               </p>
             </div>
           ) : (

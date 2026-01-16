@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  Plus,
   Users,
-  Download,
   Trash2,
   Lock,
   Unlock,
@@ -39,14 +36,13 @@ function formatBytes(bytes: number): string {
 }
 
 export default function HotspotUsersPage() {
-  const router = useRouter();
   const [users, setUsers] = useState<HotspotUser[]>([]);
   const [profiles, setProfiles] = useState<HotspotUserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState("all");
   const [selectedComment, setSelectedComment] = useState("all");
 
-  async function refreshUsers() {
+  const refreshUsers = useCallback(async () => {
     try {
       let url = "/api/hotspot/users";
       if (selectedProfile !== "all") {
@@ -60,7 +56,7 @@ export default function HotspotUsersPage() {
     } catch (error) {
       console.error("Failed to refresh users:", error);
     }
-  }
+  }, [selectedProfile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,48 +97,54 @@ export default function HotspotUsersPage() {
     };
   }, []);
 
-  async function handleDeleteUser(id: string, name: string) {
-    if (!confirm(`Are you sure to delete username (${name})?`)) return;
+  const handleDeleteUser = useCallback(
+    async (id: string, name: string) => {
+      if (!confirm(`Are you sure to delete username (${name})?`)) return;
 
-    try {
-      const res = await fetch(`/api/hotspot/users?id=${id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/hotspot/users?id=${id}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        toast.success("User deleted");
-        refreshUsers();
-      } else {
-        toast.error(data.error || "Failed to delete user");
+        if (data.success) {
+          toast.success("User deleted");
+          refreshUsers();
+        } else {
+          toast.error(data.error || "Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        toast.error("Failed to delete user");
       }
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      toast.error("Failed to delete user");
-    }
-  }
+    },
+    [refreshUsers],
+  );
 
-  async function handleToggleUser(id: string, currentStatus: string) {
-    try {
-      const action = currentStatus === "true" ? "enable" : "disable";
-      const res = await fetch("/api/hotspot/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action }),
-      });
-      const data = await res.json();
+  const handleToggleUser = useCallback(
+    async (id: string, currentStatus: string) => {
+      try {
+        const action = currentStatus === "true" ? "enable" : "disable";
+        const res = await fetch("/api/hotspot/users", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, action }),
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        toast.success(data.message);
-        refreshUsers();
-      } else {
-        toast.error(data.error || "Action failed");
+        if (data.success) {
+          toast.success(data.message);
+          refreshUsers();
+        } else {
+          toast.error(data.error || "Action failed");
+        }
+      } catch (error) {
+        console.error("Action failed:", error);
+        toast.error("Action failed");
       }
-    } catch (error) {
-      console.error("Action failed:", error);
-      toast.error("Action failed");
-    }
-  }
+    },
+    [refreshUsers],
+  );
 
   // Get unique comments from users
   const comments = useMemo(() => {
@@ -223,7 +225,6 @@ export default function HotspotUsersPage() {
         header: "Print",
         cell: ({ row }) => {
           const user = row.original;
-          const userMode = user.name === user.password ? "vc" : "up";
           return (
             <div className="flex gap-2">
               <button
@@ -302,7 +303,7 @@ export default function HotspotUsersPage() {
         cell: ({ row }) => row.getValue("comment") || "-",
       },
     ],
-    [filteredUsers],
+    [filteredUsers, handleDeleteUser, handleToggleUser],
   );
 
   if (loading) {

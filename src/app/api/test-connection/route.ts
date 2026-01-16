@@ -40,23 +40,10 @@ export async function POST(request: NextRequest) {
 
     const { host, port } = validation.data;
 
-    // Additional validation: block internal/private IPs in production
-    if (process.env.NODE_ENV === "production") {
-      const blockedPatterns = [
-        /^127\./, // Localhost
-        /^0\./, // Current network
-        /^10\./, // Private Class A
-        /^172\.(1[6-9]|2\d|3[01])\./, // Private Class B
-        /^192\.168\./, // Private Class C (allow for local dev)
-        /^169\.254\./, // Link-local
-        /^::1$/, // IPv6 localhost
-        /^fc00:/i, // IPv6 private
-        /^fe80:/i, // IPv6 link-local
-      ];
-
-      // Note: In production with Vercel, you might want to allow private IPs
-      // for connecting to routers. Adjust this based on your deployment needs.
-    }
+    // Note: In production with Vercel, you might want to block internal/private IPs
+    // for security. Adjust this based on your deployment needs.
+    // blockedPatterns: /^127\./, /^0\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./,
+    // /^192\.168\./, /^169\.254\./, /^::1$/, /^fc00:/i, /^fe80:/i
 
     return new Promise<NextResponse>((resolve) => {
       const timeout = 5000;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Clock, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,7 @@ export default function SchedulerPage() {
     refreshSchedulers();
   }, []);
 
-  async function handleDelete(id: string, name: string) {
+  const handleDelete = useCallback(async (id: string, name: string) => {
     if (!confirm(`Are you sure to delete scheduler (${name})?`)) return;
 
     try {
@@ -62,7 +62,7 @@ export default function SchedulerPage() {
       console.error("Failed to delete scheduler:", error);
       toast.error("Failed to delete scheduler");
     }
-  }
+  }, []);
 
   const columns: ColumnDef<Scheduler>[] = useMemo(
     () => [
@@ -131,7 +131,7 @@ export default function SchedulerPage() {
         cell: ({ row }) => row.getValue("comment") || "-",
       },
     ],
-    [schedulers],
+    [schedulers, handleDelete],
   );
 
   if (loading) {

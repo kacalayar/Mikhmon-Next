@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { List, Trash2, Printer, Loader2, ArrowLeft, Save } from "lucide-react";
@@ -37,11 +37,21 @@ interface QuickPrintPackage {
   sellingPrice: string;
 }
 
+interface HotspotProfile {
+  ".id": string;
+  name: string;
+}
+
+interface HotspotServer {
+  ".id": string;
+  name: string;
+}
+
 export default function QuickPrintListPage() {
   const router = useRouter();
   const [packages, setPackages] = useState<QuickPrintPackage[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [servers, setServers] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<HotspotProfile[]>([]);
+  const [servers, setServers] = useState<HotspotServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -94,7 +104,7 @@ export default function QuickPrintListPage() {
     loadPackages();
   }, []);
 
-  async function handleDelete(id: string, name: string) {
+  const handleDelete = useCallback(async (id: string, name: string) => {
     if (!confirm(`Are you sure to delete package (${name})?`)) return;
 
     try {
@@ -113,7 +123,7 @@ export default function QuickPrintListPage() {
       console.error("Failed to delete package:", error);
       toast.error("Failed to delete package");
     }
-  }
+  }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -235,7 +245,7 @@ export default function QuickPrintListPage() {
         ),
       },
     ],
-    [packages],
+    [packages, handleDelete],
   );
 
   if (loading) {
@@ -457,20 +467,20 @@ export default function QuickPrintListPage() {
 
         <div className="lg:col-span-2">
           <Card className="flex flex-col overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <List className="h-5 w-5" />
-            <span>Quick Print List</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-hidden">
-          <DataTable
-            columns={columns}
-            data={packages}
-            searchPlaceholder="Search packages..."
-          />
-        </CardContent>
-      </Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <List className="h-5 w-5" />
+                <span>Quick Print List</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              <DataTable
+                columns={columns}
+                data={packages}
+                searchPlaceholder="Search packages..."
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
