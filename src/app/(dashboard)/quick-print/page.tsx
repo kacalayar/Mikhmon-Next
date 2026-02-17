@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Printer, List } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Printer, List, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { printVouchers, VoucherData } from "@/components/print";
 import Link from "next/link";
 
 const COLORS = [
@@ -36,28 +37,89 @@ interface QuickPrintPackage {
 export default function QuickPrintPage() {
   const [packages, setPackages] = useState<QuickPrintPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [routerName, setRouterName] = useState<string>("");
 
   useEffect(() => {
-    async function loadPackages() {
+    async function loadData() {
       try {
-        const res = await fetch("/api/quick-print");
-        const data = await res.json();
-        if (data.success) {
-          setPackages(data.data);
+        // Load packages and router identity in parallel
+        const [packagesRes, dashboardRes] = await Promise.all([
+          fetch("/api/quick-print"),
+          fetch("/api/dashboard"),
+        ]);
+
+        const [packagesData, dashboardData] = await Promise.all([
+          packagesRes.json(),
+          dashboardRes.json(),
+        ]);
+
+        if (packagesData.success) {
+          setPackages(packagesData.data);
+        }
+        if (dashboardData.success && dashboardData.data?.identity) {
+          setRouterName(dashboardData.data.identity);
         }
       } catch (error) {
-        console.error("Failed to load packages:", error);
+        console.error("Failed to load data:", error);
       } finally {
         setLoading(false);
       }
     }
-    loadPackages();
+    loadData();
   }, []);
 
-  async function handlePrint(pkg: QuickPrintPackage) {
-    toast.info(`Printing package: ${pkg.package}`);
-    // TODO: Implement print voucher functionality
-  }
+  const handlePrint = useCallback(
+    async (pkg: QuickPrintPackage) => {
+      setGeneratingId(pkg.id);
+
+      try {
+        // Generate a new user based on the package configuration
+        const res = await fetch("/api/quick-print/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            packageId: pkg.id,
+            packageName: pkg.package,
+            server: pkg.server,
+            profile: pkg.profile,
+            timeLimit: pkg.timeLimit,
+            dataLimit: pkg.dataLimit,
+            validity: pkg.validity,
+            price: pkg.sellingPrice || pkg.price,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.user) {
+          // Prepare voucher data for printing
+          const voucher: VoucherData = {
+            username: data.user.username,
+            password: data.user.password,
+            profile: pkg.profile,
+            timeLimit: pkg.timeLimit !== "-" ? pkg.timeLimit : undefined,
+            dataLimit: pkg.dataLimit !== "-" ? pkg.dataLimit : undefined,
+            validity: pkg.validity !== "-" ? pkg.validity : undefined,
+            price: pkg.sellingPrice || pkg.price,
+            server: pkg.server !== "all" ? pkg.server : undefined,
+          };
+
+          // Print directly using browser print dialog
+          printVouchers([voucher], { routerName, showQr: false });
+          toast.success(`User "${data.user.username}" created successfully`);
+        } else {
+          toast.error(data.error || "Failed to generate voucher");
+        }
+      } catch (error) {
+        console.error("Failed to generate:", error);
+        toast.error("Failed to generate voucher");
+      } finally {
+        setGeneratingId(null);
+      }
+    },
+    [routerName],
+  );
 
   if (loading) {
     return (
@@ -102,40 +164,51 @@ export default function QuickPrintPage() {
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 Create packages in MikroTik System Scripts with comment
-                &quot;QuickPrintMikhmon&quot;
+                &quot;QuickPrintMikhmon&quot; or{" "}
+                <Link href="/quick-print/list" className="underline">
+                  add a new package here
+                </Link>
+                .
               </p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {packages.map((pkg, index) => (
-                <Card
-                  key={pkg.id}
-                  className={`${COLORS[index % COLORS.length]} text-white border-0 cursor-pointer hover:opacity-90 transition`}
-                  onClick={() => handlePrint(pkg)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-full bg-white/20 p-3">
-                        <Printer className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <h3 className="font-semibold">
-                          Package: {pkg.package}
-                        </h3>
-                        <div className="text-sm opacity-90 space-y-1">
-                          <p>
-                            Time: {pkg.timeLimit} | Data: {pkg.dataLimit}
-                          </p>
-                          <p>Validity: {pkg.validity}</p>
-                          <p>
-                            Price: {pkg.price} | Selling: {pkg.sellingPrice}
-                          </p>
+              {packages.map((pkg, index) => {
+                const isGenerating = generatingId === pkg.id;
+                return (
+                  <Card
+                    key={pkg.id}
+                    className={`${COLORS[index % COLORS.length]} text-white border-0 cursor-pointer hover:opacity-90 transition ${isGenerating ? "opacity-70 cursor-wait" : ""}`}
+                    onClick={() => !isGenerating && handlePrint(pkg)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="rounded-full bg-white/20 p-3">
+                          {isGenerating ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            <Printer className="h-6 w-6" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <h3 className="font-semibold">
+                            Package: {pkg.package}
+                          </h3>
+                          <div className="text-sm opacity-90 space-y-1">
+                            <p>
+                              Time: {pkg.timeLimit} | Data: {pkg.dataLimit}
+                            </p>
+                            <p>Validity: {pkg.validity}</p>
+                            <p>
+                              Price: {pkg.price} | Selling: {pkg.sellingPrice}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { printVouchers, VoucherData } from "@/components/print";
 import Link from "next/link";
 
 import type { HotspotUser, HotspotUserProfile } from "@/types/routeros";
@@ -28,12 +29,27 @@ function formatBytes(bytes: number): string {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
+// Convert HotspotUser to VoucherData
+function userToVoucher(user: HotspotUser): VoucherData {
+  return {
+    username: user.name,
+    password: user.password,
+    profile: user.profile,
+    timeLimit: user["limit-uptime"],
+    dataLimit: user["limit-bytes-total"]
+      ? formatBytes(parseInt(user["limit-bytes-total"]))
+      : undefined,
+    server: user.comment,
+  };
+}
+
 export default function HotspotUsersPage() {
   const [users, setUsers] = useState<HotspotUser[]>([]);
   const [profiles, setProfiles] = useState<HotspotUserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState("all");
   const [selectedComment, setSelectedComment] = useState("all");
+  const [routerName, setRouterName] = useState<string>("");
 
   const refreshUsers = useCallback(async () => {
     try {
@@ -56,14 +72,16 @@ export default function HotspotUsersPage() {
 
     async function loadData() {
       try {
-        const [usersRes, profilesRes] = await Promise.all([
+        const [usersRes, profilesRes, dashboardRes] = await Promise.all([
           fetch("/api/hotspot/users"),
           fetch("/api/hotspot/profiles"),
+          fetch("/api/dashboard"),
         ]);
 
-        const [usersData, profilesData] = await Promise.all([
+        const [usersData, profilesData, dashboardData] = await Promise.all([
           usersRes.json(),
           profilesRes.json(),
+          dashboardRes.json(),
         ]);
 
         if (isMounted) {
@@ -72,6 +90,9 @@ export default function HotspotUsersPage() {
           }
           if (profilesData.success) {
             setProfiles(profilesData.data);
+          }
+          if (dashboardData.success && dashboardData.data?.identity) {
+            setRouterName(dashboardData.data.identity);
           }
           setLoading(false);
         }
@@ -139,6 +160,14 @@ export default function HotspotUsersPage() {
     [refreshUsers],
   );
 
+  // Handle print single user - directly opens browser print dialog
+  const handlePrintUser = useCallback(
+    (user: HotspotUser, withQr: boolean) => {
+      printVouchers([userToVoucher(user)], { routerName, showQr: withQr });
+    },
+    [routerName],
+  );
+
   // Get unique comments from users
   const comments = useMemo(() => {
     const commentSet = new Set<string>();
@@ -155,6 +184,21 @@ export default function HotspotUsersPage() {
     if (selectedComment === "all") return users;
     return users.filter((user) => user.comment === selectedComment);
   }, [users, selectedComment]);
+
+  // Handle bulk print - directly opens browser print dialog
+  const handleBulkPrint = useCallback(
+    (withQr: boolean) => {
+      if (filteredUsers.length === 0) {
+        toast.warning("No users to print");
+        return;
+      }
+      printVouchers(filteredUsers.map(userToVoucher), {
+        routerName,
+        showQr: withQr,
+      });
+    },
+    [filteredUsers, routerName],
+  );
 
   const columns: ColumnDef<HotspotUser>[] = useMemo(
     () => [
@@ -221,14 +265,14 @@ export default function HotspotUsersPage() {
           return (
             <div className="flex gap-2">
               <button
-                onClick={() => toast.info("Print feature coming soon")}
+                onClick={() => handlePrintUser(user, false)}
                 className="cursor-pointer hover:text-primary"
                 title={`Print ${user.name}`}
               >
                 <Printer className="h-4 w-4" />
               </button>
               <button
-                onClick={() => toast.info("Print QR feature coming soon")}
+                onClick={() => handlePrintUser(user, true)}
                 className="cursor-pointer hover:text-primary"
                 title={`Print QR ${user.name}`}
               >
@@ -296,7 +340,7 @@ export default function HotspotUsersPage() {
         cell: ({ row }) => row.getValue("comment") || "-",
       },
     ],
-    [filteredUsers, handleDeleteUser, handleToggleUser],
+    [filteredUsers, handleDeleteUser, handleToggleUser, handlePrintUser],
   );
 
   if (loading) {
@@ -377,7 +421,7 @@ export default function HotspotUsersPage() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => toast.info("Print feature coming soon")}
+                  onClick={() => handleBulkPrint(false)}
                   variant="default"
                   size="sm"
                 >
@@ -385,7 +429,7 @@ export default function HotspotUsersPage() {
                   Print
                 </Button>
                 <Button
-                  onClick={() => toast.info("Print QR feature coming soon")}
+                  onClick={() => handleBulkPrint(true)}
                   variant="default"
                   size="sm"
                 >
